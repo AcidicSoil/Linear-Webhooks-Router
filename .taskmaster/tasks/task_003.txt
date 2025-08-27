@@ -1,0 +1,44 @@
+# Task ID: 3
+# Title: Implement Linear Webhook Signature Verification
+# Status: pending
+# Dependencies: 2
+# Priority: high
+# Description: Create FastAPI middleware or a dependency to validate the `linear-signature` header on all incoming webhook requests to prevent spoofing.
+# Details:
+Use the `LINEAR_WEBHOOK_SECRET` to compute an HMAC-SHA256 digest of the raw request body. Compare the computed digest with the provided signature in a constant-time manner. Reject requests with invalid signatures with a 403 Forbidden error.
+
+# Test Strategy:
+Create a local test script that sends a sample payload with both a valid and an invalid signature. Verify the server accepts the valid request and rejects the invalid one with the correct status code.
+
+# Subtasks:
+## 1. Create FastAPI dependency for signature verification [pending]
+### Dependencies: None
+### Description: Define a dependency function `verify_linear_signature(request: Request)` that will be used by webhook routes.
+### Details:
+- Access raw request body bytes (use `await request.body()`).
+- Read `linear-signature` header, return 400 if missing.
+- Defer actual HMAC/compare to helper function so it’s testable.
+
+## 2. Implement HMAC-SHA256 computation helper [pending]
+### Dependencies: None
+### Description: Compute digest of raw body using `LINEAR_WEBHOOK_SECRET`.
+### Details:
+- Use `hmac.new(secret, body, hashlib.sha256).hexdigest()`.
+- Accept hex signature from header; normalize casing.
+- Return computed hex digest for comparison.
+
+## 3. Constant-time compare and error handling [pending]
+### Dependencies: None
+### Description: Compare computed digest with header using constant-time algorithm; reject on mismatch.
+### Details:
+- Use `hmac.compare_digest(computed, provided)`.
+- On mismatch: raise `HTTPException(status_code=403, detail="invalid signature")`.
+- On success: return None so request proceeds.
+
+## 4. Create test utility and unit tests [pending]
+### Dependencies: None
+### Description: Add a helper to generate valid signatures and tests covering valid/invalid cases.
+### Details:
+- Test util: `sign(body: bytes, secret: str) -> str` returns hex.
+- Unit tests for: missing header (400), invalid signature (403), valid signature (dependency returns).
+

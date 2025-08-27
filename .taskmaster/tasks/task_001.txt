@@ -1,0 +1,11 @@
+# Task ID: 1
+# Title: Setup FastAPI Application Skeleton and Health Check
+# Status: in-progress
+# Dependencies: None
+# Priority: high
+# Description: Initialize a new FastAPI project with a basic file structure, dependencies, and a `GET /health` endpoint for uptime monitoring.
+# Details:
+Use Python 3.11+, FastAPI, and Uvicorn. The `/health` endpoint should return a simple 200 OK JSON response, e.g., `{"status": "ok"}`. This forms the base for all other features.
+
+# Test Strategy:
+Run the server locally using `uvicorn`. Access `http://localhost:8000/health` via a browser or curl and verify a 200 OK response is received.

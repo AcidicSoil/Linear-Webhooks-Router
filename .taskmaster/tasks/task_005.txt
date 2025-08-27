@@ -1,0 +1,53 @@
+# Task ID: 5
+# Title: Build Authenticated GitHub API Client
+# Status: pending
+# Dependencies: 2
+# Priority: high
+# Description: Create a client wrapper for the GitHub REST API using `httpx` to handle authentication, retries, and error handling.
+# Details:
+The client should be initialized with the `GITHUB_TOKEN`. Implement methods for creating issues, updating issues (PATCH), and creating comments. Include exponential backoff for retries on transient errors (5xx) and rate limit responses.
+
+# Test Strategy:
+Write unit tests mocking the `httpx` client to verify correct API calls, Authorization headers, and retry logic. Test against a real GitHub test repository.
+
+# Subtasks:
+## 1. Scaffold GitHubClient with httpx.AsyncClient [pending]
+### Dependencies: None
+### Description: Create `services/github_client.py` with a `GitHubClient` class using a shared AsyncClient and base URL.
+### Details:
+- Inject token via constructor.
+- Manage client lifecycle (external or context-managed).
+- Add basic error mapping util (status -> exception).
+
+## 2. Implement auth headers + request wrapper [pending]
+### Dependencies: None
+### Description: Add private method to attach `Authorization: token <GITHUB_TOKEN>` and GitHub API headers.
+### Details:
+- Default headers: Accept v3, correct UA.
+- Centralize request/response handling in one method for reuse.
+- Parse rate-limit headers for logging.
+
+## 3. Add issue + comment methods [pending]
+### Dependencies: None
+### Description: Implement `create_issue`, `update_issue`, and `create_comment` with correct endpoints/payloads.
+### Details:
+- create_issue(owner, repo, title, body, labels?) -> number
+- update_issue(owner, repo, number, title?, body?, state?)
+- create_comment(owner, repo, number, body)
+
+## 4. Add retry/backoff for transient errors [pending]
+### Dependencies: None
+### Description: Use `tenacity` (or custom) to retry 5xx and rate-limited responses with exponential backoff.
+### Details:
+- Backoff with jitter; cap max attempts.
+- Respect `Retry-After` when present.
+- Ensure idempotency and proper exception surfacing.
+
+## 5. Write API client tests with respx [pending]
+### Dependencies: None
+### Description: Mock GitHub endpoints to verify methods, headers, retry behavior, and errors.
+### Details:
+- Unit tests for create/update/comment methods.
+- Assert Authorization and Accept headers.
+- Simulate 5xx + 429 to test backoff and honoring Retry-After.
+

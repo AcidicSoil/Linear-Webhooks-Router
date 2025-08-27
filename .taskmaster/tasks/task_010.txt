@@ -1,0 +1,11 @@
+# Task ID: 10
+# Title: Implement Handler for Linear 'Comment Create' Events
+# Status: pending
+# Dependencies: 7
+# Priority: medium
+# Description: Process `comment.create` events to mirror new Linear comments to the mapped GitHub issue.
+# Details:
+On a `comment.create` event, look up the `github_issue_number` from the mapping store. Use the GitHub client to post a new comment on that issue's thread. The comment body should include the Linear comment content and author information.
+
+# Test Strategy:
+Create an issue via the sync. Send a signed `comment.create` payload for that issue. Verify a new comment appears on the GitHub issue with the correct content.

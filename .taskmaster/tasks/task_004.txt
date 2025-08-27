@@ -1,0 +1,11 @@
+# Task ID: 4
+# Title: Create SQLite Mapping Store and Repository Layer
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Define the SQLite schema for the idempotent mapping store and create a data access layer to interact with it.
+# Details:
+Schema: `issue_map(linear_issue_id TEXT PRIMARY KEY, github_issue_number INTEGER UNIQUE, linear_identifier TEXT, created_at DATETIME, updated_at DATETIME, checksum TEXT NULL)`. Implement functions for creating/upserting and retrieving mappings. Use WAL mode for better concurrency.
+
+# Test Strategy:
+Write unit tests for the repository layer functions: create, retrieve by `linear_issue_id`, and test unique constraints by attempting to insert duplicate records.

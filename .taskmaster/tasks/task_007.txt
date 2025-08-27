@@ -1,0 +1,41 @@
+# Task ID: 7
+# Title: Implement Handler for Linear 'Issue Create' Events
+# Status: pending
+# Dependencies: 4, 5, 6
+# Priority: high
+# Description: Process `issue.create` events from Linear to create a corresponding issue in GitHub and store the mapping.
+# Details:
+Use the GitHub client to create a new issue with the title and body from the Linear event. The body should include a link back to the Linear issue. Apply the `source:linear` label. After successful creation, use the mapping store to save the `linear_issue_id` and the new `github_issue_number`.
+
+# Test Strategy:
+Perform an end-to-end test: send a signed `issue.create` webhook payload. Verify a new issue is created in the target GitHub repo with the correct title, body, and label, and that a mapping is created in the SQLite database.
+
+# Subtasks:
+## 1. Wire handler into event router [pending]
+### Dependencies: None
+### Description: Register `issue.create` handler in the routing map and call it from the webhook endpoint.
+### Details:
+- Ensure signature verification dependency runs first.
+- Log event metadata (issue ID, team, actor).
+
+## 2. Extract fields and format body [pending]
+### Dependencies: None
+### Description: Get title/description from Linear payload and construct GitHub body with backlink.
+### Details:
+- Include Linear issue URL and identifiers.
+- Consider mapping Linear markdown to GitHub where needed.
+
+## 3. Create issue via GitHub client [pending]
+### Dependencies: None
+### Description: Call `GitHubClient.create_issue` with target owner/repo, title, and formatted body; handle errors.
+### Details:
+- Use routing target if available; otherwise default settings.
+- Capture returned GitHub issue number.
+
+## 4. Persist mapping in repository [pending]
+### Dependencies: None
+### Description: Save `linear_issue_id -> github_issue_number` in SQLite mapping store; ensure idempotency.
+### Details:
+- Upsert mapping to avoid duplicates.
+- Add logging/metrics for successful linkage.
+

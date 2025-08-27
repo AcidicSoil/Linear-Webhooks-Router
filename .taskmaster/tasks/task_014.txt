@@ -1,0 +1,11 @@
+# Task ID: 14
+# Title: Add Content Checksum to Avoid No-Op Updates
+# Status: pending
+# Dependencies: 8
+# Priority: low
+# Description: Implement a checksum mechanism to prevent sending unnecessary update requests to GitHub if the issue content has not changed.
+# Details:
+Add a `checksum` column to the `issue_map` table. When an issue is created or updated, compute a hash (e.g., SHA256) of the title and body. On an `issue.update` event, compare the new hash to the stored one. If they match, skip the GitHub API call.
+
+# Test Strategy:
+Send an `issue.update` event with no changes to the title or body. Verify through logs that no PATCH request is sent to GitHub. Then send an update with changes and verify the request is sent.

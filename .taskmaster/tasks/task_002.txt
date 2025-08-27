@@ -1,0 +1,11 @@
+# Task ID: 2
+# Title: Implement Environment Variable Configuration Layer
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Create a configuration module to securely load required secrets and settings from environment variables.
+# Details:
+Load `GITHUB_OWNER`, `GITHUB_REPO`, `GITHUB_TOKEN`, and `LINEAR_WEBHOOK_SECRET`. Use a library like Pydantic for validation to ensure the application fails fast on startup if configuration is missing.
+
+# Test Strategy:
+Write unit tests to verify that the configuration is loaded correctly. Run the app with and without required env vars to confirm it starts successfully or fails with a clear error message.

@@ -1,0 +1,11 @@
+# Task ID: 6
+# Title: Implement Webhook Endpoint and Event Router
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Create the main `POST /linear/webhook` endpoint that receives Linear events, uses the signature verifier, parses events, and routes them to specific handlers.
+# Details:
+The router should parse the event type (e.g., `Issue`, `Comment`) and action (e.g., `create`, `update`) to call the appropriate business logic function. Initially, these can be placeholder functions.
+
+# Test Strategy:
+Send mock Linear event payloads (issue create, comment create) to the endpoint. Verify that the router correctly identifies the event type and calls the corresponding placeholder handler function, which can be verified with logs.

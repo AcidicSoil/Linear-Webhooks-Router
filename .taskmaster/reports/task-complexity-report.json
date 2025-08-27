@@ -1,0 +1,133 @@
+{
+	"meta": {
+		"generatedAt": "2025-08-27T21:16:25.847Z",
+		"tasksAnalyzed": 15,
+		"totalTasks": 15,
+		"analysisCount": 15,
+		"thresholdScore": 7,
+		"projectName": "linear-webhook-router",
+		"usedResearch": true
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Setup FastAPI Application Skeleton and Health Check",
+			"complexityScore": 2,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "Break down the task 'Setup FastAPI Application Skeleton and Health Check' into a sequence of actionable subtasks. The subtasks should cover creating the project directory structure, initializing a virtual environment, defining dependencies in `pyproject.toml`, writing the main application file with the `/health` endpoint, and creating a `README.md` with instructions to run it.",
+			"reasoning": "This is a foundational, low-complexity task. It involves standard project setup and creating a single, simple endpoint. The steps are well-defined and follow common patterns for any FastAPI application, requiring no complex logic."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Implement Environment Variable Configuration Layer",
+			"complexityScore": 3,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand the task 'Implement Environment Variable Configuration Layer' into detailed subtasks. The breakdown should include adding Pydantic as a dependency, creating a `config.py` module, defining a Pydantic `BaseSettings` class to load and validate `GITHUB_OWNER`, `GITHUB_REPO`, `GITHUB_TOKEN`, and `LINEAR_WEBHOOK_SECRET`, and ensuring the application fails on startup if any are missing.",
+			"reasoning": "This task is slightly more complex than basic setup as it introduces a dependency (Pydantic) and a specific design pattern for type-safe configuration. The requirement to 'fail fast' adds a layer of validation logic that needs to be correctly integrated into the application's lifecycle."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Implement Linear Webhook Signature Verification",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Generate a list of subtasks for 'Implement Linear Webhook Signature Verification'. The subtasks should detail creating a FastAPI dependency function, accessing the raw request body, retrieving the `linear-signature` header, computing the HMAC-SHA256 digest using the `LINEAR_WEBHOOK_SECRET`, performing a constant-time comparison, and raising an `HTTPException` with a 403 status code on failure.",
+			"reasoning": "This task has medium complexity due to its security-critical nature. It requires knowledge of cryptographic functions (HMAC), secure coding practices like constant-time comparison, and a solid understanding of FastAPI's dependency injection system to correctly access the raw request body."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Create SQLite Mapping Store and Repository Layer",
+			"complexityScore": 4,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down the task 'Create SQLite Mapping Store and Repository Layer'. The subtasks should cover defining the `issue_map` table schema, creating a database initialization script that also enables WAL mode, implementing a `Repository` class with methods for creating/upserting and retrieving mappings by `linear_issue_id`, and writing unit tests for these data access methods.",
+			"reasoning": "This task involves database interaction, which adds complexity over in-memory logic. It requires defining a schema, implementing the Repository pattern for clean data access, and understanding specific database configurations like WAL mode. Writing correct and testable data access code requires care."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Build Authenticated GitHub API Client",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand the task 'Build Authenticated GitHub API Client' into a set of subtasks. The plan should include creating a `GitHubClient` class initialized with an `httpx.AsyncClient`, implementing authentication using the `GITHUB_TOKEN`, creating methods for `create_issue`, `update_issue`, and `create_comment` with correct payloads, and incorporating a retry mechanism with exponential backoff for transient network errors and API rate limits.",
+			"reasoning": "Medium complexity. Building a resilient API client is non-trivial. It requires not only making authenticated requests but also implementing robust error handling, including a stateful retry mechanism for transient errors and rate limiting, which is a common but complex pattern."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Implement Webhook Endpoint and Event Router",
+			"complexityScore": 4,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down the task 'Implement Webhook Endpoint and Event Router'. The subtasks should include creating the `POST /linear/webhook` route, applying the signature verification dependency, defining Pydantic models to parse the incoming Linear event payload, implementing a routing mechanism based on the event's `type` and `action`, and connecting these routes to placeholder handler functions that log the event.",
+			"reasoning": "This task's complexity lies in integrating several previously built components: the FastAPI endpoint, the signature verifier, and Pydantic models. While the routing logic itself is simple (e.g., a dictionary lookup), correctly wiring everything together is a key architectural step."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Implement Handler for Linear 'Issue Create' Events",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Generate a sequence of subtasks for 'Implement Handler for Linear 'Issue Create' Events'. The breakdown should cover wiring the handler to the event router, extracting title and body from the Linear payload, calling the GitHub client's `create_issue` method, constructing the GitHub issue body with a backlink, and upon successful API response, saving the `linear_issue_id` and new `github_issue_number` to the mapping store.",
+			"reasoning": "This is the first full end-to-end feature flow. Its medium complexity comes from orchestrating multiple services: receiving an event, calling an external API (GitHub), and writing to a database. Coordinating these I/O-bound operations and handling their potential failures correctly is key."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Implement Handler for Linear 'Issue Update' Events",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand the task 'Implement Handler for Linear 'Issue Update' Events'. The subtasks should include creating the handler function, retrieving the `linear_issue_id` from the event, using the mapping store to find the corresponding `github_issue_number`, and calling the GitHub client's `update_issue` method with the updated title and/or description.",
+			"reasoning": "This task follows the pattern established by the 'create' handler, making it less complex. The logic is a standard 'read-then-write' flow (read from DB, write to GitHub API), heavily reusing existing components like the mapping store and GitHub client."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Implement Handler for Linear 'Issue Close' Events",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down the task 'Implement Handler for Linear 'Issue Close' Events'. The subtasks should cover implementing the handler logic for issue state updates, identifying from the payload if the new state is a terminal one (e.g., 'Done', 'Archived'), looking up the mapped GitHub issue number, and using the GitHub client to change the issue's state to 'closed'.",
+			"reasoning": "Similar in complexity to the 'update' handler, this task reuses the established architecture. The main logic involves a database lookup followed by an API call. The only new piece is the logic to identify terminal states from the event payload."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Implement Handler for Linear 'Comment Create' Events",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Generate subtasks for 'Implement Handler for Linear 'Comment Create' Events'. The plan should include creating the handler function, looking up the `github_issue_number` from the mapping store using the `issueId` in the event payload, formatting the comment body to include the content and author, and calling the GitHub client's `create_comment` method.",
+			"reasoning": "This task is another implementation of the standard handler pattern. Its complexity is medium-low as it involves the familiar flow of looking up a mapping and making an API call. The primary work is in correctly parsing the comment payload and formatting the output."
+		},
+		{
+			"taskId": 11,
+			"taskTitle": "Implement Structured JSON Logging and Error Handling",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand the task 'Implement Structured JSON Logging and Error Handling'. The subtasks should cover integrating the `structlog` library, configuring it to output JSON, creating a FastAPI middleware to inject a correlation ID into logs for each request, refactoring existing code to use the new logger, and wrapping external I/O calls (GitHub client, database) in try-catch blocks to log errors with rich context.",
+			"reasoning": "This is a cross-cutting concern with medium complexity. Proper setup of structured logging requires careful configuration. The main effort comes from refactoring the entire codebase to use the new logger and consistently apply context (like correlation IDs) and robust error handling, which touches almost every file."
+		},
+		{
+			"taskId": 12,
+			"taskTitle": "Create Deployment Documentation and Local Test Script",
+			"complexityScore": 3,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down the task 'Create Deployment Documentation and Local Test Script'. The subtasks should include writing a `README.md` section on local setup, documenting all required environment variables, providing instructions for running the service with `ngrok` for webhook testing, and creating a self-contained smoke test script (e.g., using `curl` or Python's `requests`) that sends a sample signed payload.",
+			"reasoning": "While not technically complex, creating high-quality documentation and a reliable test script requires thoroughness and clarity. The effort is in ensuring instructions are accurate, complete, and easy for a newcomer to follow, which is a distinct skill from writing code."
+		},
+		{
+			"taskId": 13,
+			"taskTitle": "Implement Multi-Project/Repo Routing",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Generate a detailed subtask plan for 'Implement Multi-Project/Repo Routing'. The plan should include extending the Pydantic settings to parse a JSON string of routing rules, creating a routing service that resolves a Linear event to a specific GitHub `owner/repo` based on team ID or labels, integrating this service into the main webhook handler, and modifying the event handlers to use the dynamically resolved target repository.",
+			"reasoning": "This task is of high complexity because it represents a significant architectural shift from a static, single-target system to a dynamic, rule-based one. It impacts configuration, core business logic, and how the GitHub client is used, requiring careful design to avoid over-complicating the system."
+		},
+		{
+			"taskId": 14,
+			"taskTitle": "Add Content Checksum to Avoid No-Op Updates",
+			"complexityScore": 4,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task 'Add Content Checksum to Avoid No-Op Updates'. The subtasks should include altering the `issue_map` table to add a `checksum` column, updating the 'Issue Create' handler to compute and store a hash of the initial content, modifying the 'Issue Update' handler to compare the hash of incoming content with the stored checksum, and conditionally skipping the GitHub API call if they match.",
+			"reasoning": "This is a valuable optimization of medium-low complexity. The logic (hash and compare) is simple, but it requires a database schema migration and modifications to both the create and update data flows, touching multiple layers of the application (database, repository, handlers)."
+		},
+		{
+			"taskId": 15,
+			"taskTitle": "Implement a Dead-Letter Queue (DLQ) for Failed Events",
+			"complexityScore": 8,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Create a detailed breakdown for the task 'Implement a Dead-Letter Queue (DLQ) for Failed Events'. The subtasks should cover designing and creating a new SQLite table for the DLQ, modifying the event handlers' error-catching logic to save failed events to this table, building a command-line interface (CLI) tool, and implementing CLI commands to list, view, and re-process events from the DLQ.",
+			"reasoning": "This is a high-complexity task that introduces a major reliability feature. It requires designing a new persistent store (the DLQ table), fundamentally changing the application's error handling strategy, and building an entirely new out-of-band tool (the CLI) for inspection and reprocessing. This is a significant architectural addition."
+		}
+	]
+}

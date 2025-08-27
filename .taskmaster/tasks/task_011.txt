@@ -1,0 +1,47 @@
+# Task ID: 11
+# Title: Implement Structured JSON Logging and Error Handling
+# Status: pending
+# Dependencies: 6
+# Priority: medium
+# Description: Configure the application to output structured JSON logs for better observability and add robust error handling for API and database calls.
+# Details:
+Use a library like `structlog`. Include correlation IDs in logs to trace a request through the system. Catch exceptions from the GitHub client or mapping store and log them with context (e.g., `linear_issue_id`).
+
+# Test Strategy:
+Trigger various error conditions (e.g., invalid GitHub token, database connection error) and inspect the logs to ensure they are structured, contain relevant context, and that the endpoint returns a correct error status.
+
+# Subtasks:
+## 1. Integrate structlog and JSON config [pending]
+### Dependencies: None
+### Description: Set up `structlog` with JSON renderer and standard processors.
+### Details:
+- Configure timestamps, levels, logger name.
+- Ensure STDOUT-friendly JSON output for container logs.
+
+## 2. Add request ID middleware [pending]
+### Dependencies: None
+### Description: Middleware generates correlation ID per request and binds to log context.
+### Details:
+- Use `contextvars` or structlog contextvars.
+- Include request method, path, and request_id in logs.
+
+## 3. Global exception handler [pending]
+### Dependencies: None
+### Description: Catch unhandled errors and return sanitized JSON while logging stack and context.
+### Details:
+- Map known exceptions to appropriate status codes.
+- Ensure sensitive data is not leaked in responses.
+
+## 4. Refactor modules to use structured logger [pending]
+### Dependencies: None
+### Description: Replace print/logging calls in routers, handlers, and services with structlog logger.
+### Details:
+- Include contextual keys: request_id, event type, Linear IDs, GitHub repo/issue.
+
+## 5. Add error logging around external I/O [pending]
+### Dependencies: None
+### Description: Wrap GitHub API and DB calls to log failures with context and request_id.
+### Details:
+- Include retry outcome and rate-limit info for GitHub calls.
+- Ensure exceptions still propagate after logging when needed.
+

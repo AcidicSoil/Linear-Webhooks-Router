@@ -1,0 +1,162 @@
+# Overview
+
+A lightweight FastAPI-based bridge that mirrors Linear issues and comments into GitHub Issues to keep backlogs in sync across tools. It listens to Linear webhooks, verifies authenticity, maintains an idempotent mapping (Linear issue ↔ GitHub issue), and performs create/update/close operations plus comment mirroring in the target GitHub repository. Primary users are engineering teams that plan in Linear but track execution and automation in GitHub. The value: one source of truth in GitHub for work created in Linear, minimal setup, and low operational overhead.&#x20;
+
+# Core Features
+
+**Secure Webhook Intake**
+*What*: Validate incoming Linear webhook signatures (HMAC-SHA256) before processing.
+*Why*: Prevent spoofed or replayed events.
+*How*: Compare computed digest against `linear-signature` header using the shared `LINEAR_WEBHOOK_SECRET`.
+
+**Issue Lifecycle Sync (Linear → GitHub)**
+*What*: Create, update title/body, and close GitHub issues from Linear issue events.
+*Why*: Ensure GitHub reflects the current state of work defined in Linear.
+*How*: On create, post to GitHub Issues API and label with `source:linear`; on update, PATCH; on transition to done/archived, close the GitHub issue.
+
+**Comment Mirroring**
+*What*: Mirror Linear comments to GitHub issue comments.
+*Why*: Preserve conversation context where work is executed.
+*How*: For comment.created events, POST comment to the mapped GitHub issue thread.
+
+**Idempotent Mapping Store**
+*What*: Persist a 1:1 mapping between Linear issue IDs and GitHub issue numbers.
+*Why*: Avoid duplicates across retries; enable updates/closure routing.
+*How*: Use SQLite in dev (pluggable for Redis/KV in prod) with unique constraints and upserts.
+
+**Multi-Project Config**
+*What*: Configure single or multiple Linear teams/projects to one or many GitHub repos.
+*Why*: Support organizations with segmented backlogs.
+*How*: Environment-based config (owner/repo pairs) with optional routing rules by Linear team/label.
+
+**Deploy Anywhere**
+*What*: Run on Vercel, Fly.io, or any VM/container.
+*Why*: Minimize ops friction.
+*How*: Uvicorn ASGI server with stateless processing; pluggable storage and secrets via env vars.
+
+# User Experience
+
+**Personas**
+
+* *Platform Engineer*: Owns integrations and reliability; cares about security, observability, and easy deploys.
+* *Tech Lead / PM*: Wants GitHub issues to reflect Linear work without manual duplication.
+* *Developer*: Works primarily in GitHub; expects issues and discussions to appear automatically.
+
+**Key Flows**
+
+1. *Setup*: Engineer deploys the app, sets env vars (`GITHUB_OWNER`, `GITHUB_REPO`, `GITHUB_TOKEN`, `LINEAR_WEBHOOK_SECRET`), exposes endpoint, and registers Linear webhook.
+2. *Create Issue in Linear*: Linear sends `issue.create` → bridge creates a GitHub issue with mapping + `source:linear` label.
+3. *Update in Linear*: Title/description/state changes → bridge PATCHes mapped GitHub issue or closes it.
+4. *Comment in Linear*: `comment.create` → bridge posts a GitHub issue comment.
+5. *Operational Checks*: Smoke test body+signature can be sent locally to validate path and HMAC.
+
+**UI/UX Considerations**
+
+* No end-user UI required; provide clear logs, correlation IDs, and human-readable error messages.
+* Optional lightweight HTML `/health` endpoint for uptime checks.
+* Document sample payloads and curl smoke test for quick validation.
+
+# Technical Architecture
+
+**System Components**
+
+* *FastAPI App*: Routes: `POST /linear/webhook`, `GET /health`.
+* *Signature Verifier*: Middleware/utility to compute and compare HMAC digests.
+* *Event Router*: Parses Linear event type/action and dispatches handlers.
+* *GitHub Client*: `httpx`-based wrapper for GitHub Issues and Comments APIs with retries/backoff.
+* *Mapping Store*: SQLite by default (`linear_issue_id`, `github_issue_number`, timestamps, checksum). Swappable interface for Redis/managed KV.
+* *Config Layer*: Reads owner/repo and routing rules from env vars; supports multiple targets.
+
+**Data Models**
+
+* *Mapping*: `{ linear_issue_id (PK, unique), github_issue_number (unique), linear_identifier, created_at, updated_at }`.
+* *Event Log (optional)*: `{ id, event_type, linear_issue_id, processed_at, status, error }` for auditing.
+* *Checksum (optional)*: Store last seen hash of title/body to short-circuit no-op updates.
+
+**APIs & Integrations**
+
+* *Inbound*: Linear Webhooks (issues create/update/state change; comments).
+* *Outbound*: GitHub REST API v3 (Issues: create/update/close; Comments: create).
+* *Auth*: GitHub PAT with `repo` scope; Linear webhook secret for HMAC.
+
+**Infrastructure Requirements**
+
+* Runtime: Python 3.11+, Uvicorn.
+* Storage: SQLite file volume in dev; production KV/Redis/SQLite with backups.
+* Secrets: Env vars with secret manager (Vercel/Fly/Cloud provider).
+* Observability: Structured JSON logs; readiness/liveness endpoints; optional OpenTelemetry exporters.
+* Networking: Public HTTPS endpoint for Linear; optional ngrok for local dev.
+
+# Development Roadmap
+
+**MVP Scope**
+
+* Webhook endpoint with HMAC verification.
+* Event router handling: issue create, update (title/body), close; comment create.
+* SQLite mapping store with unique constraints + idempotent handlers.
+* Single-target repository configuration; `source:linear` label application.
+* Basic logging, error handling, and retry/backoff for GitHub calls.
+* Health check + local smoke test script.
+
+**Phase 2 Enhancements**
+
+* Multi-project/multi-repo routing (by Linear team/label).
+* Robust observability: request IDs, metrics (event counts, failures, latency), structured error taxonomy.
+* Retry DLQ (dead-letter) and reprocessor CLI for failed events.
+* Content diffs & no-op short-circuiting via checksums.
+* Config validation endpoint and self-test mode.
+
+**Phase 3 Extensions**
+
+* Backfill utility: create GitHub issues for existing Linear issues.
+* Optional bi-directional sync (GitHub → Linear) behind a feature flag.
+* Role-based admin endpoints (read-only status, mapping export).
+* Pluggable storage drivers (Postgres, Redis, Cloud KV).
+* Rate-limit adaptive scheduling and batch processing.
+
+# Logical Dependency Chain
+
+1. **App Skeleton & Health** → establish FastAPI app, `/health`, config loading.
+2. **Security First** → implement HMAC verification and reject unsigned/invalid requests.
+3. **Mapping Store** → create schema and repository layer with idempotent upserts.
+4. **GitHub Client** → build authenticated client with retries/backoff.
+5. **Issue Create Path** → end-to-end: Linear create → GitHub create → map persist.
+6. **Issue Update/Close** → PATCH/close logic using mapping.
+7. **Comment Mirroring** → add comment handlers tied to mapping.
+8. **Observability** → structured logs, metrics, error surfaces.
+9. **Multi-Project Routing** → config-driven routes to multiple repos.
+10. **Recovery Tooling** → DLQ/retry CLI, backfill utilities.
+
+# Risks and Mitigations
+
+* **Signature/Replay Vulnerabilities**: If verification is incorrect, spoofed events may process. *Mitigation*: constant-time compare, include timestamp window checks, log and drop failures.
+* **GitHub Rate Limits/Outages**: Could delay sync. *Mitigation*: exponential backoff, respect secondary rate limits, DLQ with retries, idempotent writes.
+* **Duplicate or Out-of-Order Events**: Webhook retries may cause duplication. *Mitigation*: mapping unique keys, last-write-wins with updated\_at, event sequencing where available.
+* **Schema & Storage Reliability**: SQLite file locks or corruption. *Mitigation*: WAL mode, backups; offer Postgres/Redis drivers in production.
+* **Config Drift & Secrets Leakage**: Misconfigured env or exposed tokens. *Mitigation*: config validation endpoint, secret manager usage, least-privilege GitHub PAT.
+* **Content Parity Gaps**: Rich text/attachments from Linear not represented in GitHub. *Mitigation*: clearly document supported fields; include Linear URL in issue body.
+
+# Appendix
+
+**Environment Variables**
+
+* `GITHUB_OWNER`, `GITHUB_REPO`, `GITHUB_TOKEN` (`repo` scope)
+* `LINEAR_WEBHOOK_SECRET`
+* Optional: `ROUTING_RULES_JSON`, `LOG_LEVEL`, `STORAGE_URL`
+
+**Event Handling Matrix (Linear → GitHub)**
+
+* Issue Created → Create GitHub issue; add `source:linear`; store mapping; include Linear URL.
+* Issue Updated (title/description) → PATCH GitHub issue.
+* Issue State Changed (triage → done/archived) → Close GitHub issue.
+* Comment Created → Create GitHub issue comment.
+
+**Mapping Schema (SQLite default)**
+
+* Table: `issue_map(linear_issue_id TEXT PRIMARY KEY, github_issue_number INTEGER UNIQUE, linear_identifier TEXT, created_at DATETIME, updated_at DATETIME, checksum TEXT NULL)`.
+
+**Operational Playbook (Dev/Prod)**
+
+* Local run: `uvicorn app:app --host 0.0.0.0 --port 8000`; expose with ngrok; register webhook in Linear.
+* Smoke test: send signed sample payload; verify GitHub issue creation and labeling.
+* Prod notes: enable HTTPS termination, health checks, log aggregation, and backups for the mapping store.

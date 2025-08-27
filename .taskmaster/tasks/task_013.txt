@@ -1,0 +1,48 @@
+# Task ID: 13
+# Title: Implement Multi-Project/Repo Routing
+# Status: pending
+# Dependencies: 2, 6
+# Priority: low
+# Description: Extend the configuration layer to support routing Linear events to different GitHub repositories based on rules.
+# Details:
+Read routing rules from an environment variable (e.g., `ROUTING_RULES_JSON`). The rules should map a Linear team ID or label to a specific `owner/repo` pair. The event router must use these rules to select the correct GitHub target.
+
+# Test Strategy:
+Configure multiple routing rules. Send Linear events from different teams and verify that GitHub issues are created in the correct corresponding repositories.
+
+# Subtasks:
+## 1. Define routing rules schema [pending]
+### Dependencies: None
+### Description: Specify JSON schema for `ROUTING_RULES_JSON` defining matchers and targets.
+### Details:
+- Fields: match by teamId, label(s), or projectId. Target: owner/repo.
+- Document with examples in README.
+
+## 2. Parse rules in settings [pending]
+### Dependencies: None
+### Description: Extend Pydantic settings to load and validate `ROUTING_RULES_JSON`.
+### Details:
+- Use `Json` or custom validator to parse string env var to list of rules.
+- Validate targets are `owner/repo` format.
+
+## 3. Implement routing service [pending]
+### Dependencies: None
+### Description: Create a resolver that maps a Linear event payload to a target `owner/repo` using the rules.
+### Details:
+- Provide `resolve_repo(event) -> (owner, repo)`.
+- Support precedence and first-match semantics; add fallback to default.
+
+## 4. Integrate routing into webhook path [pending]
+### Dependencies: None
+### Description: Determine target repo at the start of handling and pass it to handlers.
+### Details:
+- Modify event router signature to include target.
+- Log routing decisions for observability.
+
+## 5. Update handlers to use dynamic target + tests [pending]
+### Dependencies: None
+### Description: Refactor handlers to accept `(owner, repo)` and add unit tests for resolver decisions.
+### Details:
+- Ensure backward compatibility with default repo.
+- Add tests for team/label/project-based routing scenarios.
+

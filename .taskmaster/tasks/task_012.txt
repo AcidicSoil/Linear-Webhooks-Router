@@ -1,0 +1,11 @@
+# Task ID: 12
+# Title: Create Deployment Documentation and Local Test Script
+# Status: pending
+# Dependencies: 7, 8, 9, 10
+# Priority: medium
+# Description: Write a README with instructions for setup, configuration, and deployment. Provide a smoke test script for quick validation.
+# Details:
+Document all required environment variables. Provide instructions for running locally with `uvicorn` and `ngrok`. Include a `curl` command or Python script to act as a smoke test, sending a signed payload to a local instance.
+
+# Test Strategy:
+Have a new team member follow the README to set up and run the project locally. They should be able to successfully run the smoke test and create a GitHub issue from a sample Linear payload.

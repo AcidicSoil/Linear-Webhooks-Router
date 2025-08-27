@@ -1,0 +1,55 @@
+# Task ID: 15
+# Title: Implement a Dead-Letter Queue (DLQ) for Failed Events
+# Status: pending
+# Dependencies: 11
+# Priority: low
+# Description: For events that fail processing after all retries, save them to a persistent dead-letter queue for later inspection and reprocessing.
+# Details:
+Create a new SQLite table for the DLQ. When an event handler fails permanently, log the full event payload and error to the DLQ. Create a simple CLI tool to list and re-trigger events from the DLQ.
+
+# Test Strategy:
+Simulate a permanent failure (e.g., by using an invalid GitHub repo in config). Verify the event is written to the DLQ. Use the CLI tool to re-process it. Correct the config and re-process successfully.
+
+# Subtasks:
+## 1. Design DLQ table schema [pending]
+### Dependencies: None
+### Description: Create SQLite table `failed_events` to persist failed processing attempts.
+### Details:
+- Columns: id (PK), event_type, payload (JSON), error, retries, first_seen, last_seen.
+- Migration/init script to create table.
+
+## 2. Capture failures into DLQ [pending]
+### Dependencies: None
+### Description: Wrap handler processing with try/except and save non-transient failures into `failed_events`.
+### Details:
+- Include request_id, event identifiers, and stack trace.
+- Increment retries and update last_seen on subsequent failures.
+
+## 3. Build CLI: list and view failed events [pending]
+### Dependencies: None
+### Description: Create a `click` CLI module to list and view DLQ entries.
+### Details:
+- Commands: `dlq list`, `dlq view <id>`.
+- Output useful fields: event_type, retries, last_seen, error summary.
+
+## 4. Build CLI: replay event [pending]
+### Dependencies: None
+### Description: Add `dlq replay <id>` command to re-post the event payload to the webhook endpoint.
+### Details:
+- Use configured local URL.
+- Mark DLQ entry as reprocessed and update retries/last_seen.
+- Handle success/failure reporting.
+
+## 5. Idempotency and safety checks for replay [pending]
+### Dependencies: None
+### Description: Ensure replaying an event does not duplicate work or corrupt state.
+### Details:
+- Re-run signature generation for test mode or use bypass in local.
+- Check existing mappings/side effects before re-applying actions.
+
+## 6. Add tests for DLQ flows [pending]
+### Dependencies: None
+### Description: Unit/integration tests for failure capture and CLI operations.
+### Details:
+- Simulate handler exceptions and assert DLQ persistence.\n- Test CLI list/view/replay behavior against a temp DB.
+

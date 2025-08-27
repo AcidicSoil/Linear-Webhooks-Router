@@ -1,0 +1,11 @@
+# Task ID: 9
+# Title: Implement Handler for Linear 'Issue Close' Events
+# Status: pending
+# Dependencies: 7
+# Priority: medium
+# Description: Process state change events from Linear (e.g., to 'Done' or 'Archived') to close the corresponding GitHub issue.
+# Details:
+When an issue state changes to a terminal state, look up the mapped GitHub issue and use the GitHub client to change its state to 'closed'.
+
+# Test Strategy:
+Create an issue via the sync. Send a signed state change event payload that represents moving the issue to 'Done'. Verify the corresponding GitHub issue is closed.

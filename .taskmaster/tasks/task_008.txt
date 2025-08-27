@@ -1,0 +1,11 @@
+# Task ID: 8
+# Title: Implement Handler for Linear 'Issue Update' Events
+# Status: pending
+# Dependencies: 7
+# Priority: medium
+# Description: Process `issue.update` events to sync changes in title or description to the mapped GitHub issue.
+# Details:
+When an `issue.update` event is received, look up the `github_issue_number` from the mapping store. Use the GitHub client to PATCH the corresponding issue with the new title and/or body.
+
+# Test Strategy:
+Create an issue via the sync. Then, send a signed `issue.update` payload for that issue. Verify the title and body of the corresponding GitHub issue are updated correctly.
