@@ -9,7 +9,7 @@
         "testStrategy": "Run the server locally using `uvicorn`. Access `http://localhost:8000/health` via a browser or curl and verify a 200 OK response is received.",
         "priority": "high",
         "dependencies": [],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -17,12 +17,12 @@
         "title": "Implement Environment Variable Configuration Layer",
         "description": "Create a configuration module to securely load required secrets and settings from environment variables.",
         "details": "Load `GITHUB_OWNER`, `GITHUB_REPO`, `GITHUB_TOKEN`, and `LINEAR_WEBHOOK_SECRET`. Use a library like Pydantic for validation to ensure the application fails fast on startup if configuration is missing.",
-        "testStrategy": "Write unit tests to verify that the configuration is loaded correctly. Run the app with and without required env vars to confirm it starts successfully or fails with a clear error message.",
+        "testStrategy": "Write unit tests to verify that the configuration is loaded correctly. Run the app (e.g., using `uv run uvicorn ...`) with and without required env vars to confirm it starts successfully or fails with a clear error message.",
         "priority": "high",
         "dependencies": [
           1
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -30,19 +30,19 @@
         "title": "Implement Linear Webhook Signature Verification",
         "description": "Create FastAPI middleware or a dependency to validate the `linear-signature` header on all incoming webhook requests to prevent spoofing.",
         "details": "Use the `LINEAR_WEBHOOK_SECRET` to compute an HMAC-SHA256 digest of the raw request body. Compare the computed digest with the provided signature in a constant-time manner. Reject requests with invalid signatures with a 403 Forbidden error.",
-        "testStrategy": "Create a local test script that sends a sample payload with both a valid and an invalid signature. Verify the server accepts the valid request and rejects the invalid one with the correct status code.",
+        "testStrategy": "Create a local test script (e.g., `uv run python test_script.py`) that sends a sample payload with both a valid and an invalid signature. Verify the server accepts the valid request and rejects the invalid one with the correct status code.",
         "priority": "high",
         "dependencies": [
           2
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "Create FastAPI dependency for signature verification",
             "description": "Define a dependency function `verify_linear_signature(request: Request)` that will be used by webhook routes.",
             "details": "- Access raw request body bytes (use `await request.body()`).\n- Read `linear-signature` header, return 400 if missing.\n- Defer actual HMAC/compare to helper function so it’s testable.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 3
           },
@@ -51,7 +51,7 @@
             "title": "Implement HMAC-SHA256 computation helper",
             "description": "Compute digest of raw body using `LINEAR_WEBHOOK_SECRET`.",
             "details": "- Use `hmac.new(secret, body, hashlib.sha256).hexdigest()`.\n- Accept hex signature from header; normalize casing.\n- Return computed hex digest for comparison.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 3
           },
@@ -60,7 +60,7 @@
             "title": "Constant-time compare and error handling",
             "description": "Compare computed digest with header using constant-time algorithm; reject on mismatch.",
             "details": "- Use `hmac.compare_digest(computed, provided)`.\n- On mismatch: raise `HTTPException(status_code=403, detail=\"invalid signature\")`.\n- On success: return None so request proceeds.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 3
           },
@@ -68,8 +68,8 @@
             "id": 4,
             "title": "Create test utility and unit tests",
             "description": "Add a helper to generate valid signatures and tests covering valid/invalid cases.",
-            "details": "- Test util: `sign(body: bytes, secret: str) -> str` returns hex.\n- Unit tests for: missing header (400), invalid signature (403), valid signature (dependency returns).",
-            "status": "pending",
+            "details": "- Test util: `sign(body: bytes, secret: str) -> str` returns hex.\n- Unit tests (run via `uv run pytest`) for: missing header (400), invalid signature (403), valid signature (dependency returns).",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 3
           }
@@ -80,12 +80,12 @@
         "title": "Create SQLite Mapping Store and Repository Layer",
         "description": "Define the SQLite schema for the idempotent mapping store and create a data access layer to interact with it.",
         "details": "Schema: `issue_map(linear_issue_id TEXT PRIMARY KEY, github_issue_number INTEGER UNIQUE, linear_identifier TEXT, created_at DATETIME, updated_at DATETIME, checksum TEXT NULL)`. Implement functions for creating/upserting and retrieving mappings. Use WAL mode for better concurrency.",
-        "testStrategy": "Write unit tests for the repository layer functions: create, retrieve by `linear_issue_id`, and test unique constraints by attempting to insert duplicate records.",
+        "testStrategy": "Write unit tests (run via `uv run pytest`) for the repository layer functions: create, retrieve by `linear_issue_id`, and test unique constraints by attempting to insert duplicate records.",
         "priority": "high",
         "dependencies": [
           1
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -93,19 +93,19 @@
         "title": "Build Authenticated GitHub API Client",
         "description": "Create a client wrapper for the GitHub REST API using `httpx` to handle authentication, retries, and error handling.",
         "details": "The client should be initialized with the `GITHUB_TOKEN`. Implement methods for creating issues, updating issues (PATCH), and creating comments. Include exponential backoff for retries on transient errors (5xx) and rate limit responses.",
-        "testStrategy": "Write unit tests mocking the `httpx` client to verify correct API calls, Authorization headers, and retry logic. Test against a real GitHub test repository.",
+        "testStrategy": "Write unit tests (run via `uv run pytest`) mocking the `httpx` client to verify correct API calls, Authorization headers, and retry logic. Test against a real GitHub test repository.",
         "priority": "high",
         "dependencies": [
           2
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "Scaffold GitHubClient with httpx.AsyncClient",
             "description": "Create `services/github_client.py` with a `GitHubClient` class using a shared AsyncClient and base URL.",
             "details": "- Inject token via constructor.\n- Manage client lifecycle (external or context-managed).\n- Add basic error mapping util (status -> exception).",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 5
           },
@@ -114,7 +114,7 @@
             "title": "Implement auth headers + request wrapper",
             "description": "Add private method to attach `Authorization: token <GITHUB_TOKEN>` and GitHub API headers.",
             "details": "- Default headers: Accept v3, correct UA.\n- Centralize request/response handling in one method for reuse.\n- Parse rate-limit headers for logging.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 5
           },
@@ -123,7 +123,7 @@
             "title": "Add issue + comment methods",
             "description": "Implement `create_issue`, `update_issue`, and `create_comment` with correct endpoints/payloads.",
             "details": "- create_issue(owner, repo, title, body, labels?) -> number\n- update_issue(owner, repo, number, title?, body?, state?)\n- create_comment(owner, repo, number, body)",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 5
           },
@@ -132,7 +132,7 @@
             "title": "Add retry/backoff for transient errors",
             "description": "Use `tenacity` (or custom) to retry 5xx and rate-limited responses with exponential backoff.",
             "details": "- Backoff with jitter; cap max attempts.\n- Respect `Retry-After` when present.\n- Ensure idempotency and proper exception surfacing.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 5
           },
@@ -140,8 +140,8 @@
             "id": 5,
             "title": "Write API client tests with respx",
             "description": "Mock GitHub endpoints to verify methods, headers, retry behavior, and errors.",
-            "details": "- Unit tests for create/update/comment methods.\n- Assert Authorization and Accept headers.\n- Simulate 5xx + 429 to test backoff and honoring Retry-After.",
-            "status": "pending",
+            "details": "- Unit tests (run via `uv run pytest`) for create/update/comment methods.\n- Assert Authorization and Accept headers.\n- Simulate 5xx + 429 to test backoff and honoring Retry-After.",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 5
           }
@@ -152,12 +152,12 @@
         "title": "Implement Webhook Endpoint and Event Router",
         "description": "Create the main `POST /linear/webhook` endpoint that receives Linear events, uses the signature verifier, parses events, and routes them to specific handlers.",
         "details": "The router should parse the event type (e.g., `Issue`, `Comment`) and action (e.g., `create`, `update`) to call the appropriate business logic function. Initially, these can be placeholder functions.",
-        "testStrategy": "Send mock Linear event payloads (issue create, comment create) to the endpoint. Verify that the router correctly identifies the event type and calls the corresponding placeholder handler function, which can be verified with logs.",
+        "testStrategy": "Send mock Linear event payloads (issue create, comment create) to the endpoint, potentially using a script run with `uv run`. Verify that the router correctly identifies the event type and calls the corresponding placeholder handler function, which can be verified with logs.",
         "priority": "high",
         "dependencies": [
           3
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -165,21 +165,21 @@
         "title": "Implement Handler for Linear 'Issue Create' Events",
         "description": "Process `issue.create` events from Linear to create a corresponding issue in GitHub and store the mapping.",
         "details": "Use the GitHub client to create a new issue with the title and body from the Linear event. The body should include a link back to the Linear issue. Apply the `source:linear` label. After successful creation, use the mapping store to save the `linear_issue_id` and the new `github_issue_number`.",
-        "testStrategy": "Perform an end-to-end test: send a signed `issue.create` webhook payload. Verify a new issue is created in the target GitHub repo with the correct title, body, and label, and that a mapping is created in the SQLite database.",
+        "testStrategy": "Perform an end-to-end test: with the app running (e.g., `uv run uvicorn ...`), send a signed `issue.create` webhook payload. Verify a new issue is created in the target GitHub repo with the correct title, body, and label, and that a mapping is created in the SQLite database.",
         "priority": "high",
         "dependencies": [
           4,
           5,
           6
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "Wire handler into event router",
             "description": "Register `issue.create` handler in the routing map and call it from the webhook endpoint.",
             "details": "- Ensure signature verification dependency runs first.\n- Log event metadata (issue ID, team, actor).",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 7
           },
@@ -188,7 +188,7 @@
             "title": "Extract fields and format body",
             "description": "Get title/description from Linear payload and construct GitHub body with backlink.",
             "details": "- Include Linear issue URL and identifiers.\n- Consider mapping Linear markdown to GitHub where needed.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 7
           },
@@ -197,7 +197,7 @@
             "title": "Create issue via GitHub client",
             "description": "Call `GitHubClient.create_issue` with target owner/repo, title, and formatted body; handle errors.",
             "details": "- Use routing target if available; otherwise default settings.\n- Capture returned GitHub issue number.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 7
           },
@@ -206,7 +206,7 @@
             "title": "Persist mapping in repository",
             "description": "Save `linear_issue_id -> github_issue_number` in SQLite mapping store; ensure idempotency.",
             "details": "- Upsert mapping to avoid duplicates.\n- Add logging/metrics for successful linkage.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 7
           }
@@ -217,12 +217,12 @@
         "title": "Implement Handler for Linear 'Issue Update' Events",
         "description": "Process `issue.update` events to sync changes in title or description to the mapped GitHub issue.",
         "details": "When an `issue.update` event is received, look up the `github_issue_number` from the mapping store. Use the GitHub client to PATCH the corresponding issue with the new title and/or body.",
-        "testStrategy": "Create an issue via the sync. Then, send a signed `issue.update` payload for that issue. Verify the title and body of the corresponding GitHub issue are updated correctly.",
+        "testStrategy": "Create an issue via the sync. Then, with the app running (e.g., `uv run uvicorn ...`), send a signed `issue.update` payload for that issue. Verify the title and body of the corresponding GitHub issue are updated correctly.",
         "priority": "medium",
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -230,12 +230,12 @@
         "title": "Implement Handler for Linear 'Issue Close' Events",
         "description": "Process state change events from Linear (e.g., to 'Done' or 'Archived') to close the corresponding GitHub issue.",
         "details": "When an issue state changes to a terminal state, look up the mapped GitHub issue and use the GitHub client to change its state to 'closed'.",
-        "testStrategy": "Create an issue via the sync. Send a signed state change event payload that represents moving the issue to 'Done'. Verify the corresponding GitHub issue is closed.",
+        "testStrategy": "Create an issue via the sync. With the app running (e.g., `uv run uvicorn ...`), send a signed state change event payload that represents moving the issue to 'Done'. Verify the corresponding GitHub issue is closed.",
         "priority": "medium",
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -243,12 +243,12 @@
         "title": "Implement Handler for Linear 'Comment Create' Events",
         "description": "Process `comment.create` events to mirror new Linear comments to the mapped GitHub issue.",
         "details": "On a `comment.create` event, look up the `github_issue_number` from the mapping store. Use the GitHub client to post a new comment on that issue's thread. The comment body should include the Linear comment content and author information.",
-        "testStrategy": "Create an issue via the sync. Send a signed `comment.create` payload for that issue. Verify a new comment appears on the GitHub issue with the correct content.",
+        "testStrategy": "Create an issue via the sync. With the app running (e.g., `uv run uvicorn ...`), send a signed `comment.create` payload for that issue. Verify a new comment appears on the GitHub issue with the correct content.",
         "priority": "medium",
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -256,19 +256,19 @@
         "title": "Implement Structured JSON Logging and Error Handling",
         "description": "Configure the application to output structured JSON logs for better observability and add robust error handling for API and database calls.",
         "details": "Use a library like `structlog`. Include correlation IDs in logs to trace a request through the system. Catch exceptions from the GitHub client or mapping store and log them with context (e.g., `linear_issue_id`).",
-        "testStrategy": "Trigger various error conditions (e.g., invalid GitHub token, database connection error) and inspect the logs to ensure they are structured, contain relevant context, and that the endpoint returns a correct error status.",
+        "testStrategy": "Trigger various error conditions (e.g., invalid GitHub token, database connection error) while the app is running (e.g., `uv run uvicorn ...`) and inspect the logs to ensure they are structured, contain relevant context, and that the endpoint returns a correct error status.",
         "priority": "medium",
         "dependencies": [
           6
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "Integrate structlog and JSON config",
             "description": "Set up `structlog` with JSON renderer and standard processors.",
             "details": "- Configure timestamps, levels, logger name.\n- Ensure STDOUT-friendly JSON output for container logs.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 11
           },
@@ -277,7 +277,7 @@
             "title": "Add request ID middleware",
             "description": "Middleware generates correlation ID per request and binds to log context.",
             "details": "- Use `contextvars` or structlog contextvars.\n- Include request method, path, and request_id in logs.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 11
           },
@@ -286,7 +286,7 @@
             "title": "Global exception handler",
             "description": "Catch unhandled errors and return sanitized JSON while logging stack and context.",
             "details": "- Map known exceptions to appropriate status codes.\n- Ensure sensitive data is not leaked in responses.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 11
           },
@@ -295,7 +295,7 @@
             "title": "Refactor modules to use structured logger",
             "description": "Replace print/logging calls in routers, handlers, and services with structlog logger.",
             "details": "- Include contextual keys: request_id, event type, Linear IDs, GitHub repo/issue.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 11
           },
@@ -304,7 +304,7 @@
             "title": "Add error logging around external I/O",
             "description": "Wrap GitHub API and DB calls to log failures with context and request_id.",
             "details": "- Include retry outcome and rate-limit info for GitHub calls.\n- Ensure exceptions still propagate after logging when needed.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 11
           }
@@ -313,9 +313,9 @@
       {
         "id": 12,
         "title": "Create Deployment Documentation and Local Test Script",
-        "description": "Write a README with instructions for setup, configuration, and deployment. Provide a smoke test script for quick validation.",
-        "details": "Document all required environment variables. Provide instructions for running locally with `uvicorn` and `ngrok`. Include a `curl` command or Python script to act as a smoke test, sending a signed payload to a local instance.",
-        "testStrategy": "Have a new team member follow the README to set up and run the project locally. They should be able to successfully run the smoke test and create a GitHub issue from a sample Linear payload.",
+        "description": "Write a README with instructions for setup, configuration, and deployment. Provide a smoke test script for quick validation. Using uv for faster, reproducible env management.",
+        "details": "Document all required environment variables. Provide instructions for setting up the environment (`uv venv`), installing dependencies (`uv pip install -r requirements.txt`), and running locally with `uv run uvicorn app:app --host 0.0.0.0 --port 8000` and `ngrok`. Include a `curl` command or Python script (run with `uv run python ...`) to act as a smoke test, sending a signed payload to a local instance.",
+        "testStrategy": "Have a new team member follow the README to set up and run the project locally using `uv`. They should be able to successfully run the smoke test (e.g., `uv run ...`) and create a GitHub issue from a sample Linear payload.",
         "priority": "medium",
         "dependencies": [
           7,
@@ -323,7 +323,7 @@
           9,
           10
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -331,20 +331,20 @@
         "title": "Implement Multi-Project/Repo Routing",
         "description": "Extend the configuration layer to support routing Linear events to different GitHub repositories based on rules.",
         "details": "Read routing rules from an environment variable (e.g., `ROUTING_RULES_JSON`). The rules should map a Linear team ID or label to a specific `owner/repo` pair. The event router must use these rules to select the correct GitHub target.",
-        "testStrategy": "Configure multiple routing rules. Send Linear events from different teams and verify that GitHub issues are created in the correct corresponding repositories.",
+        "testStrategy": "Configure multiple routing rules. With the app running (e.g., `uv run uvicorn ...`), send Linear events from different teams and verify that GitHub issues are created in the correct corresponding repositories.",
         "priority": "low",
         "dependencies": [
           2,
           6
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "Define routing rules schema",
             "description": "Specify JSON schema for `ROUTING_RULES_JSON` defining matchers and targets.",
             "details": "- Fields: match by teamId, label(s), or projectId. Target: owner/repo.\n- Document with examples in README.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 13
           },
@@ -353,7 +353,7 @@
             "title": "Parse rules in settings",
             "description": "Extend Pydantic settings to load and validate `ROUTING_RULES_JSON`.",
             "details": "- Use `Json` or custom validator to parse string env var to list of rules.\n- Validate targets are `owner/repo` format.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 13
           },
@@ -362,7 +362,7 @@
             "title": "Implement routing service",
             "description": "Create a resolver that maps a Linear event payload to a target `owner/repo` using the rules.",
             "details": "- Provide `resolve_repo(event) -> (owner, repo)`.\n- Support precedence and first-match semantics; add fallback to default.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 13
           },
@@ -371,7 +371,7 @@
             "title": "Integrate routing into webhook path",
             "description": "Determine target repo at the start of handling and pass it to handlers.",
             "details": "- Modify event router signature to include target.\n- Log routing decisions for observability.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 13
           },
@@ -379,8 +379,8 @@
             "id": 5,
             "title": "Update handlers to use dynamic target + tests",
             "description": "Refactor handlers to accept `(owner, repo)` and add unit tests for resolver decisions.",
-            "details": "- Ensure backward compatibility with default repo.\n- Add tests for team/label/project-based routing scenarios.",
-            "status": "pending",
+            "details": "- Ensure backward compatibility with default repo.\n- Add tests (run via `uv run pytest`) for team/label/project-based routing scenarios.",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 13
           }
@@ -391,32 +391,32 @@
         "title": "Add Content Checksum to Avoid No-Op Updates",
         "description": "Implement a checksum mechanism to prevent sending unnecessary update requests to GitHub if the issue content has not changed.",
         "details": "Add a `checksum` column to the `issue_map` table. When an issue is created or updated, compute a hash (e.g., SHA256) of the title and body. On an `issue.update` event, compare the new hash to the stored one. If they match, skip the GitHub API call.",
-        "testStrategy": "Send an `issue.update` event with no changes to the title or body. Verify through logs that no PATCH request is sent to GitHub. Then send an update with changes and verify the request is sent.",
+        "testStrategy": "With the app running (e.g., `uv run uvicorn ...`), send an `issue.update` event with no changes to the title or body. Verify through logs that no PATCH request is sent to GitHub. Then send an update with changes and verify the request is sent.",
         "priority": "low",
         "dependencies": [
           8
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
         "id": 15,
         "title": "Implement a Dead-Letter Queue (DLQ) for Failed Events",
         "description": "For events that fail processing after all retries, save them to a persistent dead-letter queue for later inspection and reprocessing.",
-        "details": "Create a new SQLite table for the DLQ. When an event handler fails permanently, log the full event payload and error to the DLQ. Create a simple CLI tool to list and re-trigger events from the DLQ.",
-        "testStrategy": "Simulate a permanent failure (e.g., by using an invalid GitHub repo in config). Verify the event is written to the DLQ. Use the CLI tool to re-process it. Correct the config and re-process successfully.",
+        "details": "Create a new SQLite table for the DLQ. When an event handler fails permanently, log the full event payload and error to the DLQ. Create a simple CLI tool (run via `uv run python cli.py ...`) to list and re-trigger events from the DLQ.",
+        "testStrategy": "Simulate a permanent failure (e.g., by using an invalid GitHub repo in config). Verify the event is written to the DLQ. Use the CLI tool (run via `uv run ...`) to re-process it. Correct the config and re-process successfully.",
         "priority": "low",
         "dependencies": [
           11
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "Design DLQ table schema",
             "description": "Create SQLite table `failed_events` to persist failed processing attempts.",
             "details": "- Columns: id (PK), event_type, payload (JSON), error, retries, first_seen, last_seen.\n- Migration/init script to create table.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 15
           },
@@ -425,7 +425,7 @@
             "title": "Capture failures into DLQ",
             "description": "Wrap handler processing with try/except and save non-transient failures into `failed_events`.",
             "details": "- Include request_id, event identifiers, and stack trace.\n- Increment retries and update last_seen on subsequent failures.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 15
           },
@@ -433,8 +433,8 @@
             "id": 3,
             "title": "Build CLI: list and view failed events",
             "description": "Create a `click` CLI module to list and view DLQ entries.",
-            "details": "- Commands: `dlq list`, `dlq view <id>`.\n- Output useful fields: event_type, retries, last_seen, error summary.",
-            "status": "pending",
+            "details": "- Commands: `dlq list`, `dlq view <id>`.\n- Output useful fields: event_type, retries, last_seen, error summary. The CLI should be executable via `uv run`.",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 15
           },
@@ -442,8 +442,8 @@
             "id": 4,
             "title": "Build CLI: replay event",
             "description": "Add `dlq replay <id>` command to re-post the event payload to the webhook endpoint.",
-            "details": "- Use configured local URL.\n- Mark DLQ entry as reprocessed and update retries/last_seen.\n- Handle success/failure reporting.",
-            "status": "pending",
+            "details": "- The command should be run with `uv run`.\n- Use configured local URL.\n- Mark DLQ entry as reprocessed and update retries/last_seen.\n- Handle success/failure reporting.",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 15
           },
@@ -452,7 +452,7 @@
             "title": "Idempotency and safety checks for replay",
             "description": "Ensure replaying an event does not duplicate work or corrupt state.",
             "details": "- Re-run signature generation for test mode or use bypass in local.\n- Check existing mappings/side effects before re-applying actions.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 15
           },
@@ -460,8 +460,8 @@
             "id": 6,
             "title": "Add tests for DLQ flows",
             "description": "Unit/integration tests for failure capture and CLI operations.",
-            "details": "- Simulate handler exceptions and assert DLQ persistence.\\n- Test CLI list/view/replay behavior against a temp DB.",
-            "status": "pending",
+            "details": "- Run tests with `uv run pytest`.\n- Simulate handler exceptions and assert DLQ persistence.\n- Test CLI list/view/replay behavior against a temp DB.",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 15
           }
@@ -470,7 +470,7 @@
     ],
     "metadata": {
       "created": "2025-08-27T20:22:50.291Z",
-      "updated": "2025-08-27T20:32:46.068Z",
+      "updated": "2025-08-28T21:01:49.689Z",
       "description": "Tasks for master context"
     }
   }
